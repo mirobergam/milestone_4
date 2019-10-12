@@ -1,0 +1,87 @@
+---
+title: 'Milestone #4'
+author: "Miroslav Bergam"
+date: "10/12/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+#Importing tools like read_csv(), filter(), and count() from tidyverse package
+
+library(tidyverse)
+
+#Importing tools like str_sub so that I can extract the year element
+
+library(stringr)
+
+#Importing ggplot2 for my graphic
+
+library(ggplot2)
+
+```
+
+
+```{r Unique1s}
+
+#Importing raw billboard data, with all weekly rankings from the beginning of
+#the chart to mid-2019
+
+billboard_data <- read.csv("music-data/Hot Stuff.csv")
+
+#Storing cleaned data in plot_num_1s
+
+plot_num_1s <- billboard_data %>%
+  
+  #Filtering out any song that did not hit #1 on the Billboard Hot 100
+  
+  filter(Week.Position == 1) %>%
+  
+  #Creating a new column that extracts only the year from the weekly date column
+  
+  mutate(year = str_sub(WeekID,-4,-1)) %>%
+  
+  #Grouping by the years as well as SongID, which is the name of the song. We
+  #have to do this because the same song will show up multiple times because it
+  #charts for multiple weeks
+  
+  group_by(year, SongID) %>%
+  
+  #Counting the amount of appearances of the same song in each year, which counts how many weeks each song was at #1 in each year
+  
+  count() %>%
+  
+  #Ungrouping so that we can count the number of entries within each year. If we
+  #summarized now, every value would be 1, because we are in the sub-groups of
+  #songs, not the groups of year.
+  
+  ungroup() %>%
+  
+  #Grouping again by year to count number of unique #1s in each year
+ 
+  group_by(year) %>%
+  
+  #Number of entries in each group is the number of unique #1s
+  
+  summarize(unique_1s = n()) 
+
+#Plotting the clean data, showing the mumber of unique number 1s per year
+
+ggplot(plot_num_1s, aes(x = year, y = unique_1s, color = year)) +
+  
+  #Hide legend because it just shows all the year numbers, which are on the x-axis
+  
+  geom_point(show.legend = FALSE) + 
+  
+  #Making x-axis labels vertical so that they are readable
+  
+  theme(axis.text.x = element_text(angle = 90))+
+  
+  #Accurately titling, captioning, and giving x and y axis labels
+  
+  labs(title = "Number of Unique #1 Hits by Year",
+       x = "Year",
+       y = "Unique #1s",
+       caption = "A lower number of #1s means the songs \n that hit #1  occupied the spot for longer amounts of time")
+```
